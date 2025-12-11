@@ -1,4 +1,4 @@
-
+from datetime import timedelta 
 from pathlib import Path
 import os 
 from dotenv import load_dotenv
@@ -16,9 +16,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG','False') =='true'
+DEBUG = os.environ.get('DEBUG','False') =='True'
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+     'https://localhost:8000',
+     'http://127.0.0.1:8000',
+     'https://127.0.0.1:8000',
+     'http://localhost:8000',
+
+    'https://*.github.dev/',
+    'https://*.app.github.dev',     # للسماح ببيئة Codespaces (الرابط المحول)
+    'https://*.koyeb.app',          
+    'https://upgraded-halibut-wrpvvx95v57vc5jr7-8000.app.github.dev/',
+]
+
 
 
 # Application definition
@@ -30,6 +42,19 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'accounts.apps.AccountsConfig',
+    'products.apps.ProductsConfig',
+    'sales.apps.SalesConfig',
+    'notifications.apps.NotificationsConfig',
+   
+
+
+
+
+
+
 ]
 
 MIDDLEWARE = [
@@ -81,7 +106,13 @@ CACHES = {
         }
     }
 }    
+# [جديد] السماح بملفات تعريف الارتباط من أي بروتوكول آمن (HTTPS) في التطوير
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SECURE_SSL_REDIRECT = False
 
+# [جديد] السماح بملفات تعريف الارتباط بين المجالات الفرعية
+SESSION_COOKIE_SAMESITE = None 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
@@ -117,3 +148,43 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+
+# **********************************************
+# إعدادات Django REST Framework
+# **********************************************
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # [مهم] تحديد JWT كآلية المصادقة الافتراضية
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        # السماح بالقراءة للجميع افتراضياً، وسيتم تجاوزها بـ IsAuthenticated في الـ Views
+        'rest_framework.permissions.AllowAny',
+    )
+}
+
+
+# **********************************************
+# إعدادات Simple JWT
+# **********************************************
+SIMPLE_JWT = {
+    # 1. تخصيص الفئة التي تولد التوكنات بناءً على السيريال (Serial)
+    # نستخدم فئة الـ Serializer المخصصة التي كتبناها في accounts
+    'TOKEN_OBTAIN_SERIALIZER': 'accounts.serializers.CustomTokenObtainPairSerializer',
+    
+    # 2. تحديد مدة صلاحية التوكنات
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # مدة صلاحية توكن الوصول (Access)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    # مدة صلاحية توكن التحديث (Refresh)
+
+    # 3. إعدادات فنية إضافية
+    'ROTATE_REFRESH_TOKENS': True, # تدوير توكن التحديث عند كل استخدام (أمان أفضل)
+    'BLACKLIST_AFTER_ROTATION': True, # إدراج التوكن القديم في القائمة السوداء
+    'UPDATE_LAST_LOGIN': True, # تحديث حقل آخر تسجيل دخول للمستخدم
+}
+
+# **********************************************
+# إعدادات المستخدم المخصص (لتشغيل JWT)
+# **********************************************
+# [مهم] هذا يضمن أن JWT يمكنه ربط التوكن بالعميل الصحيح (الذي تم ربطه بكائن User)
+AUTH_USER_MODEL = 'auth.User'
