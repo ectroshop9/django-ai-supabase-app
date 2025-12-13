@@ -72,7 +72,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        'DIRS': [BASE_DIR / 'config' / 'templates'],  # ⬅️ أضف هذا السطر
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -188,3 +188,16 @@ SIMPLE_JWT = {
 # **********************************************
 # [مهم] هذا يضمن أن JWT يمكنه ربط التوكن بالعميل الصحيح (الذي تم ربطه بكائن User)
 AUTH_USER_MODEL = 'auth.User'
+# ============= إضافة في نهاية settings.py =============
+
+# إعدادات Cloudflare Worker
+CLOUDFLARE_WORKER_ENABLED = os.environ.get('CLOUDFLARE_WORKER_ENABLED', 'False') == 'True'
+CLOUDFLARE_WORKER_URL = os.environ.get('CLOUDFLARE_WORKER_URL', '')
+CLOUDFLARE_WORKER_SECRET = os.environ.get('CLOUDFLARE_WORKER_SECRET', '')
+
+# إعدادات الروابط المحمية
+PROTECTED_LINKS = {
+    'EXPIRY_HOURS': 2,  # صلاحية الرابط ساعتين
+    'MAX_DOWNLOADS': 3,  # 3 تحميلات لكل شراء
+    'WORKER_TIMEOUT': 5,  # ثواني للاتصال بالـ Worker
+}

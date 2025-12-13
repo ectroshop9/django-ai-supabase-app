@@ -1,0 +1,11 @@
+name = "protected-downloads"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "KV_BINDING"
+id = "08a18aea35154e44b737b2d19fca2bfc"
+
+[vars]
+API_SECRET = "X7f9kLp2qR5wY8zT1vN3mB6cE4hJ0iU8oP2"

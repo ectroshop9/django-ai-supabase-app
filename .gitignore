@@ -1,5 +1,19 @@
-# Python
+
+# Django
 __pycache__/
+*.pyc
+*.pyo
+*.log
+*.pot
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+.env
+.env.local
+.env.*.local
+
+# Python
 *.py[cod]
 *$py.class
 *.so
@@ -16,33 +30,19 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# Django
-*.log
-*.pot
-*.pyc
-db.sqlite3
-db.sqlite3-journal
-media/
-staticfiles/
-
-# Environment
-.env
-.env.local
-.env.production
-.env.production.local
+# Virtual Environment
+venv/
+ENV/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
 # OS
 .DS_Store
@@ -53,26 +53,8 @@ staticfiles/
 ehthumbs.db
 Thumbs.db
 
-# Cloudflare
-wrangler.toml
-worker.js
-venv/
-env/
-ENV/
-
-# Backup files
-*.backup
-*~
-*.bak
-*.old
-
-# Python cache
-*.pyc
-__pycache__/
-.pyc
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Test
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/

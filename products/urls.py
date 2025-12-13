@@ -1,16 +1,8 @@
-# في products/urls.py
 from django.urls import path
-from .views import (
-    PurchaseView, PurchaseListView,
-    CategoryListView, FilesByCategoryView
-)
+from .views import CategoryList, FileList, FileDetail
 
 urlpatterns = [
-    # المتجر
-    path('categories/', CategoryListView.as_view(), name='category_list'),
-    path('categories/<int:category_id>/files/', FilesByCategoryView.as_view(), name='files_by_category'),
-    
-    # الشراء والمشتريات
-    path('purchase/', PurchaseView.as_view(), name='file_purchase'),
-    path('my-purchases/', PurchaseListView.as_view(), name='purchase_list'),
+    path('categories/', CategoryList.as_view(), name='category-list'),
+    path('files/', FileList.as_view(), name='file-list'),
+    path('files/<int:id>/', FileDetail.as_view(), name='file-detail'),
 ]

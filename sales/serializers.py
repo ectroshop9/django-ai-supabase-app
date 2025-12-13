@@ -1,7 +1,17 @@
-from rest_framework import serializers
-from .models import SubscriptionPackage, ChargeCode
-from accounts.models import Customer
 
+from rest_framework import serializers
+from django.db import transaction
+from .models import Purchase, ChargeCode, SubscriptionPackage
+from accounts.models import Wallet, Transaction
+from notifications.utils import create_notification
+import secrets
+import requests
+import time
+from django.conf import settings
+from django.utils import timezone
+from products.models import TechnicalFile
+
+# ===== Serializers الحالية (أكواد الشحن) =====
 class PackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPackage
@@ -22,45 +32,104 @@ class ChargeCodeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['code', 'created_at']
 
-class GenerateChargeCodeSerializer(serializers.Serializer):
-    package_id = serializers.IntegerField()
-    count = serializers.IntegerField(min_value=1, max_value=100, default=1)
-    
-    def validate_package_id(self, value):
-        try:
-            SubscriptionPackage.objects.get(id=value)
-        except SubscriptionPackage.DoesNotExist:
-            raise serializers.ValidationError("الباقة غير موجودة")
-        return value
+# ===== Serializers الجديدة (الشراء والتحميل) =====
+class PurchaseSerializer(serializers.Serializer):
+    file_id = serializers.IntegerField()
 
-class DirectRechargeSerializer(serializers.Serializer):
-    customer_serial = serializers.CharField(max_length=15)
-    coin_amount = serializers.IntegerField(min_value=1, max_value=100000)
-    notes = serializers.CharField(required=False, allow_blank=True, max_length=500)
-    
-    def validate_customer_serial(self, value):
+    def validate(self, attrs):
+        file_id = attrs.get('file_id')
+        customer = self.context['request'].user.customer
+        
         try:
-            Customer.objects.get(serial=value)
-        except Customer.DoesNotExist:
-            raise serializers.ValidationError("رقم السيريال غير صحيح")
-        return value
+            file_obj = TechnicalFile.objects.get(id=file_id, is_available=True)
+        except TechnicalFile.DoesNotExist:
+            raise serializers.ValidationError({"file_id": "الملف غير موجود أو غير متاح"})
+            
+        wallet = customer.wallet 
+        if wallet.balance < file_obj.price_coins:
+            raise serializers.ValidationError({
+                "balance": f"الرصيد غير كافٍ. يتطلب {file_obj.price_coins} كوين"
+            })
+            
+        if Purchase.objects.filter(customer=customer, file=file_obj).exists():
+            raise serializers.ValidationError({"file_id": "لقد اشتريت هذا الملف بالفعل"})
 
-class PackageActivationSerializer(serializers.Serializer):
-    package_id = serializers.IntegerField()
-    customer_name = serializers.CharField(max_length=100, required=False, default="عميل")
-    customer_phone = serializers.CharField(max_length=15, required=False, allow_null=True)
+        self.file_obj = file_obj
+        self.wallet = wallet
+        self.customer = customer
+        
+        return attrs
+
+    def save(self, **kwargs):
+        purchase = None
+        
+        with transaction.atomic():
+            self.wallet.balance -= self.file_obj.price_coins
+            self.wallet.total_spent += self.file_obj.price_coins
+            self.wallet.save()
+            
+            purchase = Purchase.objects.create(
+                customer=self.customer,
+                file=self.file_obj,
+                paid_price=self.file_obj.price_coins
+            )
+            
+            Transaction.objects.create(
+                customer=self.customer,
+                amount=-self.file_obj.price_coins,
+                transaction_type='PURCHASE',
+                description=f"شراء الملف: {self.file_obj.title}"
+            )
+            
+            create_notification(
+                self.customer, 
+                title="تم شراء ملف جديد",
+                message=f"تم شراء الملف '{self.file_obj.title}'"
+            )
+        
+        return {
+            'success': True,
+            'purchase_id': purchase.id,
+            'purchased_at': purchase.timestamp,
+            'file_title': self.file_obj.title,
+            'file_price': self.file_obj.price_coins,
+            'new_balance': self.wallet.balance,
+            'instructions': 'اذهب إلى مشترياتك لتحميل الملف'
+        }
+
+class PurchaseDetailSerializer(serializers.ModelSerializer):
+    file_title = serializers.CharField(source='file.title')
+    file_id = serializers.IntegerField(source='file.id')
+    can_download = serializers.SerializerMethodField()
+    downloads_left = serializers.SerializerMethodField()
     
-    def validate_package_id(self, value):
+    class Meta:
+        model = Purchase
+        fields = ('id', 'file_title', 'file_id', 'paid_price', 
+                 'timestamp', 'downloads_count', 'can_download', 'downloads_left')
+    
+    def get_can_download(self, obj):
+        return obj.downloads_count < 3
+    
+    def get_downloads_left(self, obj):
+        return max(0, 3 - obj.downloads_count)
+
+class DownloadSerializer(serializers.Serializer):
+    purchase_id = serializers.IntegerField()
+    
+    def validate(self, attrs):
+        purchase_id = attrs.get('purchase_id')
+        customer = self.context['request'].user.customer
+        
         try:
-            SubscriptionPackage.objects.get(id=value)
-        except SubscriptionPackage.DoesNotExist:
-            raise serializers.ValidationError("الباقة غير موجودة")
-        return value
-    
-    def validate_customer_phone(self, value):
-        if value and Customer.objects.filter(phone=value).exists():
-            raise serializers.ValidationError("رقم الهاتف مسجل بالفعل")
-        return value
-
-class CheckCodeSerializer(serializers.Serializer):
-    code = serializers.CharField(max_length=12)
+            purchase = Purchase.objects.get(id=purchase_id, customer=customer)
+        except Purchase.DoesNotExist:
+            raise serializers.ValidationError({"purchase_id": "الشراء غير موجود"})
+            
+        if purchase.downloads_count >= 3:
+            raise serializers.ValidationError({"downloads": "تم استنفاذ التحميلات"})
+            
+        self.purchase = purchase
+        self.customer = customer
+        
+        return attrs
