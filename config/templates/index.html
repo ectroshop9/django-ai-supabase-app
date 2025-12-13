@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Files API</title>
+    
+    <!-- Simple Modern CSS -->
+    <style>
+        /* Reset and Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+            --radius: 8px;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            background: #f9fafb;
+            color: var(--dark);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        
+        .logo-icon {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+        
+        /* Main */
+        .main {
+            padding: 3rem 0;
+        }
+        
+        /* Hero */
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding: 3rem 0;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--secondary);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        
+        /* Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+        
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--dark);
+        }
+        
+        .card-desc {
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius);
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--light);
+        }
+        
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.25rem 0.75rem;
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        /* API Section */
+        .api-section {
+            background: white;
+            border-radius: var(--radius);
+            padding: 3rem;
+            margin-top: 4rem;
+            border: 1px solid var(--border);
+        }
+        
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        
+        .code-block code {
+            display: block;
+            line-height: 1.6;
+        }
+        
+        .code-comment {
+            color: #94a3b8;
+        }
+        
+        .code-method {
+            color: #60a5fa;
+        }
+        
+        .code-url {
+            color: #fbbf24;
+        }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--secondary);
+            font-size: 0.95rem;
+        }
+        
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 0;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .footer-section h3 {
+            color: var(--light);
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid #334155;
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .api-section {
+                padding: 1.5rem;
+            }
+            
+            .quick-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="/" class="logo">
+                    <span class="logo-icon">📁</span>
+                    <span>TechFiles API</span>
+                </a>
+                <div class="status-badge">
+                    System Operational
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Hero -->
+            <section class="hero">
+                <h1>Technical Files Management System</h1>
+                <p>Secure file distribution platform with advanced protection and real-time monitoring</p>
+                
+                <div class="quick-actions">
+                    <a href="/admin/" class="btn">
+                        <span>🔐 Admin Panel</span>
+                    </a>
+                    <a href="/api/v1/" class="btn btn-secondary">
+                        <span>🚀 Explore API</span>
+                    </a>
+                    <a href="/api/v1/status/" class="btn btn-secondary">
+                        <span>📊 System Status</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">API Endpoints</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Monitoring</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">SSL</div>
+                    <div class="stat-label">Encryption</div>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <section class="cards">
+                <div class="card">
+                    <div class="card-icon">🔐</div>
+                    <h3 class="card-title">JWT Authentication</h3>
+                    <p class="card-desc">Secure token-based authentication with automatic refresh and role-based access control.</p>
+                    <a href="/api/v1/token/" class="btn">Get Access Token</a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">⚡</div>
+                    <h3 class="card-title">Cloudflare Worker</h3>
+                    <p class="card-desc">Secure file delivery through Cloudflare Workers with single-use download links.</p>
+                    <a href="#" class="btn btn-secondary" onclick="alert('Worker: https://files.ectroshop9.workers.dev')">View Worker</a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">📚</div>
+                    <h3 class="card-title">REST API</h3>
+                    <p class="card-desc">Comprehensive REST API with full CRUD operations, rate limiting, and detailed documentation.</p>
+                    <a href="/api/v1/" class="btn btn-secondary">API Documentation</a>
+                </div>
+                
+                <div class="card">
+                    <div class="card-icon">🛡️</div>
+                    <h3 class="card-title">Security</h3>
+                    <p class="card-desc">Advanced security features including CORS protection, rate limiting, and SQL injection prevention.</p>
+                    <a href="/api/v1/status/" class="btn btn-secondary">Security Status</a>
+                </div>
+            </section>
+
+            <!-- API Examples -->
+            <section class="api-section">
+                <h2 style="margin-bottom: 1.5rem; color: var(--dark);">API Examples</h2>
+                
+                <h3 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--dark);">Get Access Token</h3>
+                <div class="code-block">
+                    <code>
+                        <span class="code-method">POST</span> <span class="code-url">{{ base_url }}api/v1/token/</span><br>
+                        <span class="code-comment"># Request Body:</span><br>
+                        {<br>
+                        &nbsp;&nbsp;"username": "your_username",<br>
+                        &nbsp;&nbsp;"password": "your_password"<br>
+                        }
+                    </code>
+                </div>
+                
+                <h3 style="margin-bottom: 1rem; font-size: 1.125rem; color: var(--dark);">Access Protected Resource</h3>
+                <div class="code-block">
+                    <code>
+                        <span class="code-method">GET</span> <span class="code-url">{{ base_url }}api/v1/status/</span><br>
+                        <span class="code-comment"># Request Headers:</span><br>
+                        Authorization: Bearer &lt;your_access_token&gt;
+                    </code>
+                </div>
+                
+                <div class="quick-actions" style="margin-top: 2rem;">
+                    <a href="/api/v1/token/" class="btn">
+                        <span>🔑 Get API Token</span>
+                    </a>
+                    <a href="/api/v1/" class="btn btn-secondary">
+                        <span>📖 Full API Docs</span>
+                    </a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>System</h3>
+                    <ul class="footer-links">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/admin/">Admin Panel</a></li>
+                        <li><a href="/api/v1/status/">System Status</a></li>
+                        <li><a href="/api/v1/">API Documentation</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Authentication</h3>
+                    <ul class="footer-links">
+                        <li><a href="/api/v1/token/">Get Token</a></li>
+                        <li><a href="/api/v1/token/refresh/">Refresh Token</a></li>
+                        <li><a href="/api/v1/accounts/">User Management</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul class="footer-links">
+                        <li><a href="/api/v1/products/">Products API</a></li>
+                        <li><a href="/api/v1/sales/">Sales API</a></li>
+                        <li><a href="/api/v1/notifications/">Notifications</a></li>
+                        <li><a href="#">Cloudflare Worker</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>© 2025 Technical Files API v1.0.0</p>
+                <p style="margin-top: 0.5rem;">Built with Django REST Framework • JWT • Cloudflare</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple real-time update
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = 
+                now.toLocaleTimeString('en-US', { hour12: false });
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+</body>
+</html>
