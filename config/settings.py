@@ -20,19 +20,18 @@ DEBUG = os.environ.get('DEBUG','False') =='True'
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
-     'https://localhost:8000',
-     'http://127.0.0.1:8000',
-     'https://127.0.0.1:8000',
-     'http://localhost:8000',
-
-    'https://*.github.dev/',
-    'https://*.app.github.dev',     # للسماح ببيئة Codespaces (الرابط المحول)
-    'https://*.koyeb.app',          
-    'https://upgraded-halibut-wrpvvx95v57vc5jr7-8000.app.github.dev/',
-    '.onrender.com',      # لـ Render
-    '.koyeb.app',         # لـ Koyeb
-    '*.herokuapp.com',    # لـ Heroku
-    '*.up.railway.app',   # لـ Railway
+    'https://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://127.0.0.1:8000',
+    'http://localhost:8000',
+    'https://*.github.dev',
+    'https://*.app.github.dev',
+    'https://*.koyeb.app',
+    'https://upgraded-halibut-wrpvvx95v57vc5jr7-8000.app.github.dev',
+    'https://*.onrender.com',      # ⬅️ أضف https://
+    'https://*.koyeb.app',         # ⬅️ أضف https://
+    'https://*.herokuapp.com',    # ⬅️ أضف https://
+    'https://*.up.railway.app',   # ⬅️ أضف https://
 ]
 
 # CORS للسماح لـ UptimeRobot بالوصول
@@ -53,7 +52,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'corsheaders',  # ⬅️ أضف هذا قبل rest_framework
     'rest_framework',
     'rest_framework_simplejwt',
     'accounts.apps.AccountsConfig',
@@ -66,7 +64,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    'corsheaders.middleware.CorsMiddleware',  
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
