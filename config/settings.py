@@ -64,11 +64,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-<<<<<<< HEAD
-=======
     'whitenoise.middleware.WhiteNoiseMiddleware',  # ⬅️ أضف هذا السطر
     'corsheaders.middleware.CorsMiddleware',  
->>>>>>> f1c56ae127f739e4d70a22eaa3c93a5903d638f6
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -210,7 +207,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     )
 }
-
 
 # **********************************************
 # إعدادات Simple JWT
