@@ -7,10 +7,7 @@ djangorestframework-simplejwt==5.3.0
 PyJWT==2.10.1
 psycopg2-binary==2.9.11
 dj-database-url==3.0.1
-<<<<<<< HEAD
-=======
 corsheaders==4.1.0
->>>>>>> f1c56ae127f739e4d70a22eaa3c93a5903d638f6
 redis==7.1.0
 django-redis==6.0.0
 Pillow==12.0.0
@@ -22,12 +19,9 @@ urllib3==2.6.2
 python-dotenv==1.2.1
 psutil==5.9.8
 gunicorn==21.2.0
-<<<<<<< HEAD
 whitenoise==6.6.0
-=======
 whitenoise==6.6.0
 python-dotenv==1.2.1
 psutil==5.9.8
 gunicorn==21.2.0
 whitenoise==6.6.0
->>>>>>> f1c56ae127f739e4d70a22eaa3c93a5903d638f6
