@@ -29,10 +29,21 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.app.github.dev',     # للسماح ببيئة Codespaces (الرابط المحول)
     'https://*.koyeb.app',          
     'https://upgraded-halibut-wrpvvx95v57vc5jr7-8000.app.github.dev/',
+    '.onrender.com',      # لـ Render
+    '.koyeb.app',         # لـ Koyeb
+    '*.herokuapp.com',    # لـ Heroku
+    '*.up.railway.app',   # لـ Railway
 ]
 
-
-
+# CORS للسماح لـ UptimeRobot بالوصول
+CORS_ALLOWED_ORIGINS = [
+    "https://uptimerobot.com",
+    "https://api.uptimerobot.com",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+CORS_ALLOW_ALL_ORIGINS = True  # للتطوير فقط
+CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,6 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'corsheaders',  # ⬅️ أضف هذا قبل rest_framework
     'rest_framework',
     'rest_framework_simplejwt',
     'accounts.apps.AccountsConfig',
@@ -50,15 +62,11 @@ INSTALLED_APPS = [
     'notifications.apps.NotificationsConfig',
    
 
-
-
-
-
-
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    'corsheaders.middleware.CorsMiddleware',  
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -142,7 +150,44 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
+# ============= UptimeRobot Settings =============
 
+# Health Check Configuration
+HEALTH_CHECK = {
+    'ENABLED': True,
+    'ENDPOINTS': [
+        '/health/',
+        '/api/health/',
+        '/',  # الصفحة الرئيسية
+    ],
+    'CHECK_INTERVAL': 300,  # 5 دقائق (بالثواني)
+}
+
+# Monitoring Services
+MONITORING_SERVICES = {
+    'UPTIMEROBOT': {
+        'ENABLED': True,
+        'API_KEY': os.environ.get('UPTIMEROBOT_API_KEY', ''),
+        'ALERT_CONTACTS': os.environ.get('UPTIMEROBOT_CONTACTS', ''),
+    },
+    'TELEGRAM': {
+        'ENABLED': os.environ.get('TELEGRAM_ENABLED', 'False') == 'True',
+        'BOT_TOKEN': os.environ.get('TELEGRAM_BOT_TOKEN', ''),
+        'CHAT_ID': os.environ.get('TELEGRAM_CHAT_ID', ''),
+    }
+}
+
+# Auto Ping Settings (لإبقاء الخدمة نشطة)
+AUTO_PING = {
+    'ENABLED': True,
+    'SERVICES': [
+        {
+            'name': 'UptimeRobot',
+            'url': 'https://api.uptimerobot.com/v2/getMonitors',
+            'interval': 300,  # كل 5 دقائق
+        }
+    ]
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
