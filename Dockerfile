@@ -31,4 +31,4 @@ RUN python manage.py collectstatic --noinput
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-MD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:$PORT", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:$PORT", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]
