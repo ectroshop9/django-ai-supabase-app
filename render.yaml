@@ -17,5 +17,3 @@ services:
         value: ".onrender.com"
       - key: REDIS_URL
         sync: false
-      - key: CLOUDFLARE_WORKER_ENABLED
-        value: "False"
