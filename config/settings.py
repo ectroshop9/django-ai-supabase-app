@@ -35,14 +35,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # CORS للسماح لـ UptimeRobot بالوصول
-CORS_ALLOWED_ORIGINS = [
-    "https://uptimerobot.com",
-    "https://api.uptimerobot.com",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
-CORS_ALLOW_ALL_ORIGINS = True  # للتطوير فقط
-CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -65,7 +57,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',  # ⬅️ أضف هذا السطر
-    'corsheaders.middleware.CorsMiddleware',  
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
