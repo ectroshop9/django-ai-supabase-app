@@ -1,41 +1,22 @@
-# Django Core
 Django==5.0.2
 asgiref==3.11.0
 sqlparse==0.5.4
 pytz==2025.2
-
-# REST Framework
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.0
 PyJWT==2.10.1
-
-# Database
 psycopg2-binary==2.9.11
 dj-database-url==3.0.1
-
-# CORS - استخدم واحداً فقط
 corsheaders==4.3.0
-
-# Redis Cache
 redis==7.1.0
 django-redis==6.0.0
-
-# File Handling
 Pillow==12.0.0  # ⬅️ حرف كبير P
-
-# HTTP & Requests
 requests==2.32.5
 certifi==2025.11.12
 charset-normalizer==3.4.4
 idna==3.11
 urllib3==2.6.2
-
-# Environment
 python-dotenv==1.2.1
-
-# Monitoring
 psutil==5.9.8
-
-# ⭐⭐ Production (مهم!)
 gunicorn==21.2.0
 whitenoise==6.6.0
