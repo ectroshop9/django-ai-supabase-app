@@ -64,6 +64,11 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+<<<<<<< HEAD
+=======
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ⬅️ أضف هذا السطر
+    'corsheaders.middleware.CorsMiddleware',  
+>>>>>>> f1c56ae127f739e4d70a22eaa3c93a5903d638f6
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -230,7 +235,23 @@ SIMPLE_JWT = {
 # **********************************************
 # [مهم] هذا يضمن أن JWT يمكنه ربط التوكن بالعميل الصحيح (الذي تم ربطه بكائن User)
 AUTH_USER_MODEL = 'auth.User'
-# ============= إضافة في نهاية settings.py =============
+
+# ============= إعدادات Static Files =============
+
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Render-specific settings
+import os
+PORT = os.environ.get('PORT', '8000')  # Render يمرر PORT
+
+# Production security (لـ Render و Koyeb)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # إعدادات Cloudflare Worker
 CLOUDFLARE_WORKER_ENABLED = os.environ.get('CLOUDFLARE_WORKER_ENABLED', 'False') == 'True'
