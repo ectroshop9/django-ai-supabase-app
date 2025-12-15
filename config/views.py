@@ -1,7 +1,8 @@
 # config/views.py - النسخة المعدلة
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 import psutil
 import time
 from django.db import connection
@@ -9,7 +10,8 @@ import datetime
 
 
 
-@require_GET
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
 def health_check(request):
     """فحص مفصل لصحة النظام"""
     checks = {}
@@ -28,10 +30,10 @@ def health_check(request):
     except Exception as e:
         checks['database'] = {
             'status': 'unhealthy',
-            'error': str(e)[:100]  # تقليل طول الرسالة
+            'error': str(e)[:100]
         }
     
-    # 2. فحص الذاكرة (إذا كان psutil متاحاً)
+    # 2. فحص الذاكرة
     try:
         memory = psutil.virtual_memory()
         checks['memory'] = {
@@ -72,14 +74,16 @@ def health_check(request):
         'version': '1.0.0',
         'service': 'Technical Files Store',
         'response_time_ms': round(total_time, 2),
-        'uptime_robot': 'ready'
+        'uptime_robot': 'ready',
+        'request_method': request.method
     }, status=status_code)
     
     response['X-Response-Time'] = f'{total_time:.2f}ms'
     response['X-Health-Check'] = 'true'
     return response
 
-@require_GET
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
 def uptime_robot_ping(request):
     """Endpoint خاص بـ UptimeRobot"""
     return JsonResponse({
@@ -87,10 +91,12 @@ def uptime_robot_ping(request):
         'service': 'Django Files Store',
         'timestamp': datetime.datetime.now().isoformat(),
         'version': '1.0.0',
-        'message': '✅ UptimeRobot monitoring is active'
+        'message': '✅ UptimeRobot monitoring is active',
+        'request_method': request.method
     })
 
-@require_GET
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
 def simple_health(request):
     """فحص صحة بسيط"""
     try:
@@ -99,11 +105,13 @@ def simple_health(request):
         return JsonResponse({
             'status': 'ok',
             'database': 'connected',
-            'timestamp': datetime.datetime.now().isoformat()
+            'timestamp': datetime.datetime.now().isoformat(),
+            'request_method': request.method
         })
     except Exception as e:
         return JsonResponse({
             'status': 'error',
             'database': 'disconnected',
-            'error': str(e)[:100]
+            'error': str(e)[:100],
+            'request_method': request.method
         }, status=503)
