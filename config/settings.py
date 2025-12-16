@@ -1,5 +1,5 @@
 """
-Django settings cleaned version
+Django settings cleaned version with R2 support
 """
 
 import os
@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'rest_framework',
     'rest_framework_simplejwt',
+    'storages',  # ✅ مضافة لـ R2
     'accounts.apps.AccountsConfig',
     'products.apps.ProductsConfig',
     'sales.apps.SalesConfig',
@@ -29,7 +30,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',  # ❌ معلقة لأننا نستخدم R2
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -88,9 +89,50 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static files
-STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# ============= R2 Configuration =============
+USE_R2 = os.environ.get('USE_R2', 'True') == 'True'
+
+if USE_R2:
+    # إعدادات R2
+    AWS_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME', 'django-app-static')
+    AWS_S3_ENDPOINT_URL = os.environ.get('R2_ENDPOINT_URL', 'https://your-account.r2.cloudflarestorage.com')
+    
+    # إعدادات S3/R2
+    AWS_S3_REGION_NAME = 'auto'
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_QUERYSTRING_AUTH = False
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    
+    # Static files على R2
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/static/'
+    
+    # Media files على R2
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'{STATIC_URL}media/'
+    
+    print(f"✅ R2 storage enabled for bucket: {AWS_STORAGE_BUCKET_NAME}")
+    
+else:
+    # Fallback للتطوير
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    STATIC_URL = '/static/'
+    STATIC_ROOT = BASE_DIR / "staticfiles"
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / "media"
+    print("⚠️  Using local storage (whitenoise)")
+
+# Static files directories
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -106,8 +148,13 @@ REST_FRAMEWORK = {
 }
 
 # Simple JWT
+from datetime import timedelta
 SIMPLE_JWT = {
     'TOKEN_OBTAIN_SERIALIZER': 'accounts.serializers.CustomTokenObtainPairSerializer',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
 # Cache - using local memory for Render Free
@@ -118,53 +165,23 @@ CACHES = {
     }
 }
 
-# CSRF settings for production
-CSRF_TRUSTED_ORIGINS = [
-    'https://your-app.onrender.com',
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-]
-
-# أو عطل CSRF للـ admin فقط (غير آمن للproduction)
-# CSRF_USE_SESSIONS = True
-
-# إعدادات CSRF لـ Render
+# ============= Security Settings for Render =============
 CSRF_TRUSTED_ORIGINS = [
     'https://*.onrender.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'http://localhost:10000',
+    'http://0.0.0.0:10000',
 ]
 
-# أو استخدم متغير بيئة
-import os
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
-
-# ============================================
-# CSRF & Security Settings for Render
-# ============================================
-
-# قائمة النطاقات المسموح لها بالوصول الآمن
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.onrender.com',           # جميع تطبيقات Render
-    'http://localhost:8000',            # التطوير المحلي
-    'http://127.0.0.1:8000',            # التطوير المحلي
-    'http://localhost:10000',           # Docker محلي
-    'http://0.0.0.0:10000',             # Docker محلي
-]
-
-# أو استخدم متغيرات البيئة ديناميكياً
-import os
-
-# إذا كنت على Render، أضف نطاقك المحدد
+# إضافة نطاق Render المحدد
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
 
 # إعدادات أمنية إضافية لـ Render
 if 'RENDER' in os.environ or not DEBUG:
-    # تفعيل HTTPS إجباري
+    # تفعيل HTTPS
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     
@@ -172,21 +189,23 @@ if 'RENDER' in os.environ or not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     
-    # إعدادات HSTS (للأمان المتقدم)
-    SECURE_HSTS_SECONDS = 31536000  # سنة واحدة
+    # إعدادات HSTS
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     
-    print(f"✅ تم تفعيل إعدادات الأمان لـ Render: {RENDER_EXTERNAL_HOSTNAME}")
+    print(f"✅ Production security enabled for {RENDER_EXTERNAL_HOSTNAME or 'Render'}")
 
-# CSRF Settings for Render
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.onrender.com',
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
-]
+# ============= Health Check Settings =============
+HEALTH_CHECK = {
+    'ENABLED': True,
+    'ENDPOINTS': ['/health/', '/api/health/', '/'],
+    'CHECK_INTERVAL': 300,
+}
 
-import os
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+# Port for Render
+PORT = os.environ.get('PORT', '8000')
+print(f"🚀 Django settings loaded: DEBUG={DEBUG}, USE_R2={USE_R2}, PORT={PORT}")
+# تجاهل تحذير static إذا المجلد غير موجود
+import warnings
+warnings.filterwarnings('ignore', message='The directory.*in the STATICFILES_DIRS')

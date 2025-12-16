@@ -1,30 +1,14 @@
-FROM python:3.11-slim
-
-# مكتبات نظام أساسية فقط
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# نسخ المتطلبات أولاً
-COPY requirements.txt .
+RUN apt-get update && apt-get install -y libpq-dev && rm -rf /var/lib/apt/lists/*
 
-# تثبيت
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# تنظيف
-RUN find . -type f -name "*.pyc" -delete \
-    && find . -type d -name "__pycache__" -delete
+EXPOSE 8000
 
-ENV PYTHONUNBUFFERED=1 DJANGO_SETTINGS_MODULE=config.settings
-
-# مستخدم
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
-# CMD مع JSON format
-CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:\${PORT:-10000} --workers 1 --timeout 120"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

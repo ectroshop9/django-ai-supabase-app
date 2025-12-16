@@ -1,31 +1,29 @@
-# config/views.py - النسخة المعدلة
-from django.shortcuts import render
+"""
+health check views for Django application
+"""
+
+import datetime
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-import psutil
-import time
 from django.db import connection
-import datetime
-
+import os
+import shutil
 
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["GET"])
 def health_check(request):
-    """فحص مفصل لصحة النظام"""
+    """فحص صحة شامل"""
     checks = {}
-    start_time = time.time()
     
     # 1. فحص قاعدة البيانات
-    db_start = time.time()
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
-        db_time = (time.time() - db_start) * 1000
         checks['database'] = {
             'status': 'healthy',
-            'response_time_ms': round(db_time, 2)
+            'message': 'Database connection successful'
         }
     except Exception as e:
         checks['database'] = {
@@ -33,85 +31,121 @@ def health_check(request):
             'error': str(e)[:100]
         }
     
-    # 2. فحص الذاكرة
+    # 2. فحص القرص (بدون psutil)
     try:
+        disk = shutil.disk_usage("/")
+        disk_percent = (disk.used / disk.total * 100) if disk.total > 0 else 0
+        
+        checks['disk'] = {
+            'status': 'healthy' if disk_percent < 80 else 'warning',
+            'percent': round(disk_percent, 1),
+            'free_gb': round(disk.free / (1024**3), 2),
+            'total_gb': round(disk.total / (1024**3), 2)
+        }
+    except Exception as e:
+        checks['disk'] = {
+            'status': 'unknown',
+            'error': str(e)[:100]
+        }
+    
+    # 3. الذاكرة (مشروطة بتوفر psutil)
+    try:
+        import psutil
         memory = psutil.virtual_memory()
         checks['memory'] = {
             'status': 'healthy' if memory.percent < 90 else 'warning',
             'percent': round(memory.percent, 1),
             'available_gb': round(memory.available / (1024**3), 2)
         }
-    except Exception:
-        checks['memory'] = {'status': 'unknown', 'note': 'psutil not available'}
-    
-    # 3. فحص القرص
-    try:
-        disk = psutil.disk_usage('/')
-        checks['disk'] = {
-            'status': 'healthy' if disk.percent < 85 else 'warning',
-            'percent': round(disk.percent, 1),
-            'free_gb': round(disk.free / (1024**3), 2)
+    except ImportError:
+        checks['memory'] = {
+            'status': 'info',
+            'message': 'psutil not installed, memory check skipped'
         }
-    except Exception:
-        checks['disk'] = {'status': 'unknown', 'note': 'disk check failed'}
+    except Exception as e:
+        checks['memory'] = {
+            'status': 'unknown',
+            'error': str(e)[:100]
+        }
     
-    # 4. فحص وقت الاستجابة الكلي
-    total_time = (time.time() - start_time) * 1000
-    
-    # تحديد الحالة العامة
-    all_healthy = all(
-        check.get('status') in ['healthy', 'warning', 'unknown'] 
+    # 4. تحديد الحالة العامة
+    has_critical = any(
+        check.get('status') == 'unhealthy' 
         for check in checks.values()
     )
     
-    status_code = 200 if all_healthy else 503
-    status_text = 'healthy' if all_healthy else 'unhealthy'
+    status_code = 200 if not has_critical else 503
+    overall_status = 'healthy' if not has_critical else 'unhealthy'
     
-    response = JsonResponse({
-        'status': status_text,
+    response = {
+        'status': overall_status,
         'checks': checks,
-        'timestamp': datetime.datetime.now().isoformat(),
+        'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        'service': 'Technical Files Store API',
         'version': '1.0.0',
-        'service': 'Technical Files Store',
-        'response_time_ms': round(total_time, 2),
-        'uptime_robot': 'ready',
-        'request_method': request.method
-    }, status=status_code)
+        'environment': os.environ.get('DJANGO_ENV', 'production')
+    }
     
-    response['X-Response-Time'] = f'{total_time:.2f}ms'
-    response['X-Health-Check'] = 'true'
-    return response
+    return JsonResponse(response, status=status_code)
+
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
-def uptime_robot_ping(request):
-    """Endpoint خاص بـ UptimeRobot"""
-    return JsonResponse({
-        'status': 'pong',
-        'service': 'Django Files Store',
-        'timestamp': datetime.datetime.now().isoformat(),
-        'version': '1.0.0',
-        'message': '✅ UptimeRobot monitoring is active',
-        'request_method': request.method
-    })
-
-@csrf_exempt
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["GET"])
 def simple_health(request):
-    """فحص صحة بسيط"""
+    """فحص صحة خفيف"""
     try:
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
+        
         return JsonResponse({
             'status': 'ok',
-            'database': 'connected',
-            'timestamp': datetime.datetime.now().isoformat(),
-            'request_method': request.method
+            'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'service': 'Django API'
         })
     except Exception as e:
         return JsonResponse({
             'status': 'error',
-            'database': 'disconnected',
-            'error': str(e)[:100],
-            'request_method': request.method
+            'error': 'Database connection failed',
+            'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat()
         }, status=503)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def disk_analysis(request):
+    """تحليل مساحة القرص"""
+    try:
+        disk = shutil.disk_usage("/")
+        total_gb = disk.total / (1024**3)
+        used_gb = disk.used / (1024**3)
+        free_gb = disk.free / (1024**3)
+        percent = (used_gb / total_gb * 100) if total_gb > 0 else 0
+        
+        if percent > 90:
+            status = 'critical'
+            recommendation = 'إخلاء مساحة فوراً'
+        elif percent > 80:
+            status = 'warning'
+            recommendation = 'توصية: تنظيف الملفات المؤقتة'
+        else:
+            status = 'healthy'
+            recommendation = 'حالة جيدة'
+        
+        return JsonResponse({
+            'disk': {
+                'total_gb': round(total_gb, 2),
+                'used_gb': round(used_gb, 2),
+                'free_gb': round(free_gb, 2),
+                'percent': round(percent, 1),
+                'status': status
+            },
+            'recommendation': recommendation,
+            'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e),
+            'message': 'Disk analysis failed',
+            'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat()
+        }, status=500)
