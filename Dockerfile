@@ -1,6 +1,6 @@
 # ============================================
-# Production Dockerfile for Django + Fly.io
-# Optimized Size: ~200MB
+# Production Dockerfile for Django + Render.com
+# Optimized for Render.com (PORT=10000)
 # ============================================
 
 FROM python:3.11-slim
@@ -8,7 +8,7 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8080
+ENV PORT=10000  # ⬅️ غيّر من 8080 إلى 10000
 
 WORKDIR /app
 
@@ -36,11 +36,11 @@ RUN useradd -m -u 1000 django && \
 USER django
 
 # Expose port
-EXPOSE 8080
+EXPOSE 10000  # ⬅️ غيّر من 8080 إلى 10000
 
-# Health check (for Fly.io monitoring)
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health/ || exit 1
+    CMD curl -f http://localhost:$PORT/health/ || exit 1  # ⬅️ استخدم $PORT
 
-# Run Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "config.wsgi:application"]
+# Run Gunicorn - USE $PORT NOT 8080
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "config.wsgi:application"]  # ⬅️ غيّر إلى $PORT
