@@ -1,12 +1,37 @@
-Django==4.2.8
+# ============================================
+# Production Requirements for Fly.io
+# ============================================
+
+# Django Core
+Django==4.2.0
 gunicorn==21.2.0
+
+# Database
+dj-database-url==2.0.0
 psycopg2-binary==2.9.9
-dj-database-url==2.1.0
+
+# Static & Media Files
+whitenoise==6.6.0
+
+# REST API & Authentication
 djangorestframework==3.14.0
-djangorestframework-simplejwt==5.3.1
+djangorestframework-simplejwt==5.3.0
+
+# CORS Headers
+django-cors-headers==4.3.1
+
+# Cloudflare R2 Storage
+django-storages==1.14.2
 boto3==1.34.0
-django-storages==1.14.3
+
+# Redis Cache
+django-redis==5.4.0
+redis==5.0.1
+
+# Utilities
 python-dotenv==1.0.0
-requests==2.32.5
-Pillow==12.0.0  # ⬅️ المضافة
-django-storages
+
+# ============================================
+# Total packages: 12
+# Estimated size: ~200MB
+# ============================================
