@@ -334,3 +334,7 @@ Port:          {PORT}
 # Ignore warnings
 warnings.filterwarnings('ignore', message='The directory.*in the STATICFILES_DIRS')
 warnings.filterwarnings('ignore', category=UserWarning, module='whitenoise')
+# ============= CLOUDFLARE WORKER (FOR SECURE DOWNLOADS) =============
+CLOUDFLARE_WORKER_ENABLED = os.environ.get('CLOUDFLARE_WORKER_ENABLED', 'True') == 'True'
+CLOUDFLARE_WORKER_URL = os.environ.get('CLOUDFLARE_WORKER_URL', '')
+CLOUDFLARE_WORKER_SECRET = os.environ.get('CLOUDFLARE_WORKER_SECRET', '')
