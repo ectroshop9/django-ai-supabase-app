@@ -33,4 +33,4 @@ USER django
 EXPOSE 10000
 
 # Run Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "config.wsgi:application"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:$PORT config.wsgi:application"]
