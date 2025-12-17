@@ -2,22 +2,30 @@ services:
   - type: web
     name: django-ai-supabase-app
     env: python
-    region: oregon  # أو أي region قريب
+    region: oregon
     buildCommand: |
+      pip install --upgrade pip
       pip install -r requirements.txt
       python manage.py collectstatic --no-input
-    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: |
+      echo "Starting Django on port: $PORT"
+      gunicorn config.wsgi:application \
+        --bind 0.0.0.0:$PORT \
+        --workers 2 \
+        --timeout 120 \
+        --access-logfile -
     envVars:
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "django-ai-supabase-app.onrender.com,localhost,127.0.0.1"
+        value: "${RENDER_EXTERNAL_HOSTNAME},localhost,127.0.0.1"
       - key: PORT
-        value: "10000"  # Render يستخدم 10000 أو 8000
-      - key: PYTHON_VERSION
-        value: "3.11.0"
+        value: "10000"
+      - key: PYTHONUNBUFFERED
+        value: "1"
     healthCheckPath: /health/
+    healthCheckTimeout: 10
     autoDeploy: true
     plan: free
