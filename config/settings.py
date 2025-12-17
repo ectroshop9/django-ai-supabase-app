@@ -313,7 +313,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ============= RENDER.COM SETTINGS =============
-PORT = int(os.environ.get('PORT', 8000))
+PORT = int(os.environ.get('PORT', 10000))
 
 # Create logs directory
 (BASE_DIR / 'logs').mkdir(exist_ok=True)
